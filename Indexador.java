@@ -1,22 +1,42 @@
+//package com;
+
 // Java program to read JSON from a file 
 
 //import java.lang.Iterable;
+import java.io.IOException;
 import java.io.FileReader; 
 import java.util.Iterator; 
 import java.util.Map; 
 import java.util.HashMap;
 import java.lang.Integer;
+//import java.lang.ClassNotFoundException;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
 
 import org.json.simple.JSONArray; 
 import org.json.simple.JSONObject; 
 import org.json.simple.parser.*; 
+
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.TextField;
+import org.apache.lucene.document.StoredField;
 
 public class Indexador
 { 
 	//Map usado para atribuir id aos Autores
 	public static Map<String, Integer> users = new HashMap<String, Integer>();
 
-	public static int getDataSet(String arquivo,int id) throws Exception {
+	public static int getDataSet(String arquivo,int id) throws Exception 
+	{
 		// perseando o arquivo .json 
 		Object obj = new JSONParser().parse(new FileReader(arquivo));
 
@@ -48,20 +68,41 @@ public class Indexador
 	    return id;
 	}
 
-	/*public static void Indexa(){
+	public static void Indexa() throws IOException 
+	{
+		Analyzer analyzer = new StandardAnalyzer();
 
-	}*/
+        String indexPath = "index";
+        Directory directory = FSDirectory.open(Paths.get(indexPath));
+        IndexWriterConfig config = new IndexWriterConfig(analyzer);
+        IndexWriter iwriter = new IndexWriter(directory, config);
+
+        for (String i : users.keySet()) {
+		  	//System.out.println("key: " + i + " value: " + users.get(i));
+
+		  	Document doc = new Document();
+        	doc.add(new Field("name", i, TextField.TYPE_STORED));
+        	doc.add(new StoredField("id",users.get(i)));
+
+        	//System.out.println(doc);
+        	iwriter.addDocument(doc);
+		}
+        
+        iwriter.close();
+	}
 
 
-	public static void main(String[] args) throws Exception 
+	public static void main(String[] args) throws Exception
 	{ 	
 		int id = 1;
-		id = getDataSet("arquivoteste20",id);
-		System.out.println(id);
-
-
-		for (String i : users.keySet()) {
-		  System.out.println("key: " + i + " value: " + users.get(i));
+		for(int i=1;i<=108;i++){
+			if(i!=6) id = getDataSet("data/" + Integer.toString(i),id);
 		}
+
+		/*for (String i : users.keySet()) {
+		  System.out.println("key: " + i + " value: " + users.get(i));
+		}*/
+
+		Indexa();
 	}
 }
